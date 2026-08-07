@@ -1,3 +1,15 @@
+# Security Policy
+
+## Supported Versions
+
+| Version | Supported |
+|---------|-----------|
+| `main` (unreleased) | ✅ Active development |
+| Earlier releases | ❌ No security backports |
+
+Security fixes are applied to the `main` branch. Once the project reaches a
+stable release cadence, a backport policy will be documented here.
+
 ## Security
 
 NVIDIA is dedicated to the security and trust of our software products and services, including all source code repositories managed through our organization.
