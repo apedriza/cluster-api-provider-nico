@@ -6,7 +6,6 @@ This file lists the active maintainers of `cluster-api-provider-nico`.
 
 | Name | GitHub | Affiliation | Areas |
 |------|--------|-------------|-------|
-| Terry Howe | [@TerryHowe](https://github.com/TerryHowe) | NVIDIA | All |
 | Zack Madell | [@zmadell](https://github.com/zmadell) | NVIDIA | All |
 
 ## Responsibilities
