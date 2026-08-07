@@ -18,6 +18,9 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/test.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      repository: ${{ github.event.pull_request.head.repo.full_name }}
 
   lint:
     name: golangci-lint (fork-approved)
@@ -25,3 +28,6 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/lint.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      repository: ${{ github.event.pull_request.head.repo.full_name }}
