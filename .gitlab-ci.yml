@@ -28,6 +28,35 @@ variables:
   PROVIDER_ARTIFACT_PACKAGE_NAME: cluster-api-provider-nico
   GITHUB_DEV_REPO_URL: https://github.com/NVIDIA/cluster-api-provider-nico
 
+# Skip release pipelines for docs / GitHub-only / non-release path bumps.
+# Use an allowlist (not a markdown denylist): mixed commits that touch code
+# still release; docs-only or .github-only pushes create no pipeline.
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+      changes: &release-paths
+        - .gitlab-ci.yml
+        - Dockerfile
+        - Makefile
+        - go.mod
+        - go.sum
+        - metadata.yaml
+        - api/**/*
+        - cmd/**/*
+        - config/**/*
+        - controllers/**/*
+        - internal/**/*
+        - charts/**/*
+        - hack/**/*
+    - when: never
+
+# Shared by included publish jobs (e.g. git-tag). Keep in sync with workflow allowlist.
+.golang:
+  rules:
+    - changes: *release-paths
+
 # GitLab is a release mirror; development happens on GitHub.
 redirect-to-github:
   stage: notify
