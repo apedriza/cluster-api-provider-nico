@@ -1,5 +1,10 @@
 # cluster-api-provider-nico
 
+[![Test](https://github.com/NVIDIA/cluster-api-provider-nico/actions/workflows/test.yml/badge.svg)](https://github.com/NVIDIA/cluster-api-provider-nico/actions/workflows/test.yml)
+[![Lint](https://github.com/NVIDIA/cluster-api-provider-nico/actions/workflows/lint.yml/badge.svg)](https://github.com/NVIDIA/cluster-api-provider-nico/actions/workflows/lint.yml)
+[![License](https://img.shields.io/github/license/NVIDIA/cluster-api-provider-nico)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/NVIDIA/cluster-api-provider-nico?include_prereleases)](https://github.com/NVIDIA/cluster-api-provider-nico/releases)
+
 Kubernetes Cluster API (CAPI) infrastructure provider to provision bare metal nodes in [NCX Infra Controller (NICo)](https://github.com/NVIDIA/ncx-infra-controller-core).
 
 * `NicoCluster` holds shared NICo configuration such as site and VPC, and may optionally reference a per-cluster credentials Secret.
