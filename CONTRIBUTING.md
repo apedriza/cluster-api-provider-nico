@@ -110,6 +110,47 @@ Use a short descriptive branch name, for example:
 - `fix/identity-secret-rotation`
 - `docs/contributing-quickstart`
 
+## Commit message format
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <short description>
+
+[optional body]
+
+[optional footer: Closes #<issue>]
+```
+
+Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `perf`
+
+Examples:
+```
+feat(api): add NicoClusterTemplate status conditions
+fix(controllers): handle nil identityRef on cluster delete
+docs: update credential rotation guidance
+chore(deps): bump golang.org/x/net to v0.55.0
+```
+
+Breaking changes must include `BREAKING CHANGE:` in the footer or `!` after the type:
+```
+feat!: remove deprecated v1alpha1 NicoCluster fields
+
+BREAKING CHANGE: spec.legacyEndpoint is removed. Use spec.identityRef instead.
+```
+
+## Changelog maintenance
+
+User-visible changes go in `CHANGELOG.md` under `[Unreleased]` before each release.
+Add an entry when your PR:
+- Adds or changes user-facing behavior
+- Fixes a bug users could observe
+- Removes or deprecates a feature
+
+Use the `[Keep a Changelog](https://keepachangelog.com/)` headings: `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security`.
+
+You do not need a changelog entry for internal refactors, CI changes, or test-only PRs.
+
 ## Code of Conduct
 
 This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
