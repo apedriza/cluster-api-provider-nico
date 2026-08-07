@@ -15,8 +15,8 @@ include:
       - /templates/publish/multi-arch.gitlab-ci.yml
 
 stages:
+  - notify
   - versioning
-  - test
   - build
   - publish
 
@@ -26,35 +26,36 @@ variables:
   DSX_NGC_ORG: "0837451325059433"
   DSX_NGC_TEAM: "components-dev"
   PROVIDER_ARTIFACT_PACKAGE_NAME: cluster-api-provider-nico
+  GITHUB_DEV_REPO_URL: https://github.com/NVIDIA/cluster-api-provider-nico
 
-.golang:
+# GitLab is a release mirror; development happens on GitHub.
+redirect-to-github:
+  stage: notify
+  image: alpine:3.20
   rules:
-    - changes:
-        - .gitlab-ci.yml
-        - Dockerfile
-        - Makefile
-        - api/**/*
-        - cmd/**/*
-        - config/**/*
-        - controllers/**/*
-        - internal/**/*
-        - go.mod
-        - go.sum
-
-test:
-  stage: test
-  image: golang:1.25
-  variables:
-    KUBERNETES_CPU_LIMIT: "2000m"
-    KUBERNETES_MEMORY_LIMIT: "6Gi"
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - |
       set -euo pipefail
-      make test
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+      apk add --no-cache curl > /dev/null
+      marker="CAPNICO_GITHUB_DEV_REDIRECT"
+      notes_url="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"
+      if curl --fail --silent --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        "${notes_url}?per_page=100" | grep -q "${marker}"; then
+        echo "Redirect comment already present; skipping"
+        exit 0
+      fi
+      body="$(cat <<EOF
+<!-- ${marker} -->
+This GitLab project is a **release mirror**. Please open development work and pull requests on GitHub:
+
+${GITHUB_DEV_REPO_URL}
+EOF
+)"
+      curl --fail --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        --data-urlencode "body=${body}" \
+        "${notes_url}"
+      echo "Posted GitHub redirect comment on MR !${CI_MERGE_REQUEST_IID}"
 
 container-image:
   stage: build
@@ -63,6 +64,10 @@ container-image:
   variables:
     KUBERNETES_CPU_LIMIT: "2000m"
     KUBERNETES_MEMORY_LIMIT: "8Gi"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
 
 release-manifests:
   stage: build
@@ -93,9 +98,9 @@ release-manifests:
       - out/infrastructure-components.yaml
     expire_in: 1 week
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_PIPELINE_SOURCE == "web"'
+    - when: never
 
 publish-image-nvcr:
   stage: publish
