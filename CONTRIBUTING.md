@@ -1,5 +1,55 @@
 # Contributing to cluster-api-provider-nico
 
+## Development environment setup
+
+**Prerequisites:**
+
+- Go 1.24+ (see `go.mod` for the exact version in use)
+- Docker (for building the controller image and running e2e tests)
+- [kind](https://kind.sigs.k8s.io/) — local Kubernetes cluster for integration testing
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [clusterctl](https://cluster-api.sigs.k8s.io/user/quick-start#install-clusterctl) — for generating cluster manifests
+
+**Clone and build:**
+
+```bash
+git clone https://github.com/NVIDIA/cluster-api-provider-nico.git
+cd cluster-api-provider-nico
+
+# Generate deepcopy methods and CRD manifests
+make generate manifests
+
+# Build the controller binary
+make build
+```
+
+**Run unit tests:**
+
+```bash
+make test
+```
+
+**Run the full local CI gate** (mirrors what runs in GitHub Actions):
+
+```bash
+make generate manifests fmt test build
+```
+
+**Run the controller locally** (requires a running cluster with CAPI installed):
+
+```bash
+export KUBECONFIG=/path/to/management-cluster.kubeconfig
+make run
+```
+
+**Explore available targets:**
+
+```bash
+make help
+```
+
+---
+
 Thanks for your interest in contributing. Contributions typically fall into
 three categories:
 
