@@ -57,19 +57,35 @@ Releases are cut on demand. There is no fixed schedule.
    git push upstream v<VERSION>
    ```
 
-5. **Two workflows fire on the tag push** (independent; neither can break the other):
-   - **Release** creates a GitHub Release with notes extracted from `CHANGELOG.md`.
+5. **Three workflows fire on the tag push** (independent; none can break the others):
+   - **Release** creates a GitHub Release with notes extracted from
+     `CHANGELOG.md` and attaches the clusterctl provider artifacts,
+     `metadata.yaml` and `infrastructure-components.yaml`. The attached manifest
+     references the GHCR image for that tag.
    - **Image** builds `linux/amd64` and `linux/arm64`, uploads SPDX SBOM
      artifacts, and pushes a multi-arch manifest to
      `ghcr.io/nvidia/cluster-api-provider-nico:<tag>` (plus the matching
      `sha-<commit>` tag). Pushes to `main` publish `:edge` the same way.
+   - **NVCR** pushes the same image tags to the two NGC destinations named by
+     the `NVCR_NKE_IMAGE` and `NVCR_DSX_IMAGE` variables, adding `:latest` on
+     `main`. On a tag it also packages the `capi-provider-nico` Helm chart and
+     pushes it to the NGC chart registry under `DSX_NGC_ORG`/`DSX_NGC_TEAM`,
+     with the chart's manifest pointing at the DSX image.
 
-   The GitLab mirror still publishes the same commit to NGC for DSX. That is an
-   independent rebuild, not a copy of the GHCR digest.
+   The NVCR workflow is skipped outside `NVIDIA/cluster-api-provider-nico`, so
+   forks can disable or ignore it without affecting the GHCR publish. It reads
+   its destinations and credentials from the `nvcr` environment: the variables
+   `NVCR_NKE_IMAGE`, `NVCR_DSX_IMAGE`, `DSX_NGC_ORG` and `DSX_NGC_TEAM`, and the
+   secrets `NVCR_NKE_AUTH_TOKEN` and `NGC_REGISTRY_TOKEN_DSX`. A missing
+   variable fails the job with a named error rather than pushing somewhere
+   unintended. Each workflow rebuilds from source rather than copying the GHCR
+   digest.
 
 6. **Verify**
    - GitHub Release: `https://github.com/NVIDIA/cluster-api-provider-nico/releases`
    - GHCR image: `ghcr.io/nvidia/cluster-api-provider-nico:v<VERSION>`
+   - NVCR images: `<NVCR_NKE_IMAGE>:v<VERSION>` and `<NVCR_DSX_IMAGE>:v<VERSION>`
+   - NGC chart: `ngc registry chart info <DSX_NGC_ORG>/<DSX_NGC_TEAM>/capi-provider-nico`
 
 ## Backport policy
 
