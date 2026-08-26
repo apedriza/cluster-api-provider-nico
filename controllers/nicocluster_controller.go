@@ -49,6 +49,7 @@ var nicoClusterOwnedConditions = []string{
 // NicoClusterReconciler reconciles a NicoCluster object.
 type NicoClusterReconciler struct {
 	client.Client
+	APIReader      client.Reader
 	Scheme         *runtime.Scheme
 	ProviderConfig nico.ProviderConfig
 	// nicoClientFactory optionally overrides client construction after Secret load (tests).
@@ -66,7 +67,7 @@ func (r *NicoClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	log := ctrl.LoggerFrom(ctx)
 
 	var nicoCluster infrav1.NicoCluster
-	if err := r.Get(ctx, req.NamespacedName, &nicoCluster); err != nil {
+	if err := r.reader().Get(ctx, req.NamespacedName, &nicoCluster); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -77,6 +78,14 @@ func (r *NicoClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if cluster == nil {
 		log.Info("Waiting for Cluster controller to set OwnerRef on NicoCluster")
 		return reconcile.Result{}, nil
+	}
+
+	if !controllerutil.ContainsFinalizer(&nicoCluster, nicoClusterFinalizer) {
+		controllerutil.AddFinalizer(&nicoCluster, nicoClusterFinalizer)
+		if err := r.Update(ctx, &nicoCluster); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to add finalizer: %w", err)
+		}
+		return ctrl.Result{}, nil
 	}
 
 	patchHelper, err := patch.NewHelper(&nicoCluster, r.Client)
@@ -146,10 +155,6 @@ func (r *NicoClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	if !controllerutil.ContainsFinalizer(&nicoCluster, nicoClusterFinalizer) {
-		controllerutil.AddFinalizer(&nicoCluster, nicoClusterFinalizer)
-	}
-
 	nicoClient, err := r.nicoClientForCluster(ctx, &nicoCluster)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -179,7 +184,18 @@ func (r *NicoClusterReconciler) nicoClientForCluster(ctx context.Context, nicoCl
 	return nicoClientForCluster(ctx, r.Client, nicoCluster, r.ProviderConfig.Credentials, r.nicoClientFactory)
 }
 
+func (r *NicoClusterReconciler) reader() client.Reader {
+	if r.APIReader != nil {
+		return r.APIReader
+	}
+	return r.Client
+}
+
 func (r *NicoClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	if r.APIReader == nil {
+		r.APIReader = mgr.GetAPIReader()
+	}
+
 	predicateLog := ctrl.LoggerFrom(ctx).WithValues("controller", "NicoCluster")
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.NicoCluster{}).
