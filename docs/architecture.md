@@ -45,6 +45,13 @@ its subnet or VPC prefix must already exist.
 | `NicoMachineTemplate` | Consumed by `KubeadmControlPlane` and `MachineDeployment` |
 | `NicoClusterTemplate` | The type exists and generates a CRD. Nothing in this repository consumes it yet — there is no ClusterClass or topology handling, and no example uses it. |
 
+`NicoMachine.spec` remains editable until the controller assigns
+`spec.providerID`. After that assignment, the entire spec is immutable because
+CAPNICO currently uses these fields to build the NICo instance create request
+but does not apply later changes to the existing instance. Metadata and status
+updates remain allowed. The controller's initial provider ID assignment is the
+transition that freezes the spec.
+
 The API group is `infrastructure.cluster.x-k8s.io/v1alpha1`. `metadata.yaml`
 records the Cluster API contract each release series implements; it is currently
 `v1beta2`.
