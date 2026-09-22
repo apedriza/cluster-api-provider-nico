@@ -81,6 +81,10 @@ type NicoMachineReconciler struct {
 	Scheme           *runtime.Scheme
 	ProviderConfig   nico.ProviderConfig
 	WatchFilterValue string
+
+	// WorkloadClientFactory overrides workload cluster client construction.
+	// When unset, clients are built from the workload cluster kubeconfig.
+	WorkloadClientFactory workloadClientFactory
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=nicomachines,verbs=get;list;watch;create;update;patch
@@ -415,6 +419,10 @@ func (r *NicoMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	log.V(1).Info("reconciled NicoMachine", "instanceID", nicoMachine.Status.InstanceID, "machineID", nicoMachine.Status.MachineID)
 	setMachineProvisionedTrue(&nicoMachine, infrav1.InstanceReadyReason)
+	nodeResult, err := r.reconcileNodeProviderID(ctx, ownerMachine, cluster, &nicoMachine)
+	if err != nil || !nodeResult.IsZero() {
+		return nodeResult, err
+	}
 	return ctrl.Result{RequeueAfter: machineReadyRequeueAfter(nicoMachine)}, nil
 }
 
